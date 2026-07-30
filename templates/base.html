@@ -26,6 +26,16 @@
     </nav>
 
     <main class="main-content">
+        {% with msgs = get_flashed_messages(with_categories=true) %}
+            {% if msgs %}
+            <div class="flash-stack">
+                {% for category, message in msgs %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </main>
 
