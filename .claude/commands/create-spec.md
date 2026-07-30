@@ -6,8 +6,11 @@ allowed-tools: Read, Write, Glob
 You are a senior developer planning a new feature for the Spendly expense tracker. Always follow the rules in CLAUDE.md.
 
 User input: $ARGUMENTS
+## Step 1 - Check working directory is clean
+Run `git status` and check for uncommitted, unstaged, or untracked files. If any exist, stop immediately and tell the user to commit or stash changes before proceeding.
+DO NOT CONTINUE until the working directory is clean.|
 
-## Step 1 - Parse the arguments 
+## Step 2 - Parse the arguments 
 From ARGUMENTS extract:
 
 1. "`step_number`" - zero-padded to 2 digits:
@@ -21,16 +24,34 @@ From ARGUMENTS extract:
 - Only a-z, 0-9 and -
 - Maximum 40 characters
 - Example: registration, Login-logout
+4. `branch_name` - format: `feature/<feature_slug>`
+- Example: `feature/registration`
 
 If you cannot infer these from ARGUMENTS, ask the user to clarify before proceeding.
-## Step 2 - Research the codebase
+## Step 3 - Check branch name is not taken
+Run `git branch` to list existing branches.
+If `branch_name` is already taken, append a number:
+`feature/registration-01`, `feature/registration-02` etc.
+
+## Step 4 - Switch to main and pull latest
+Run:
+```
+git checkout main 
+git pull origin main
+```
+## Step 5 - Create and switch to the feature branch
+Run:
+``` 
+git checkout -b <branch_name>
+```
+## Step 6 - Research the codebase
 Read these files before writing the spec:
 - CLAUDE.md - roadmap, conventions, schema
 - app.py - existing routes and structure
 - database/db.py - existing schema and functions
 - All files in .claude/specs/ - avoid duplicating existing specs
 
-## Step 3 - Write the spec
+## Step 7 - Write the spec
 Generate a specdocument with this exact structure:
 # Spec: <feature_title›
 
@@ -73,14 +94,20 @@ Always include:
 ## Definition of done
 A specific testable checklist. Each item must be
 something that can be verified by running the app.
-芥丼
-Step
-## Step 4 - Save the spec
+---
+
+## Step 8 - Save the spec
 Save to: .claude/specs/<step_number>-<feature_slug>.md
-## Step 5 - Report to the user
+
+## Step 9 - Report to the user
 Print a short summary in this exact format:
+```
+Branch:    <branch_name>
 Spec file: .claude/specs/<step_number>-<feature_slug>.md
 Title: <feature_title>
+```
+
+
 Then tell the user:
 "Review the spec at .claude/specs/<step_number>-<feature_slug>.md
 then enter the Plan Mode with Shift+Tab twice to begin implementation."
