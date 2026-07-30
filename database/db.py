@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import date, timedelta
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 DB_PATH = "spendly.db"
 
@@ -52,6 +52,21 @@ def create_user(name, email, password):
         return cursor.lastrowid
     finally:
         conn.close()
+
+
+def verify_user(email, password):
+    """Return the user row if the email/password pair matches, else None."""
+    conn = get_db()
+    try:
+        user = conn.execute(
+            "SELECT * FROM users WHERE email = ?", (email,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if user is not None and check_password_hash(user["password_hash"], password):
+        return user
+    return None
 
 
 def seed_db():

@@ -1,8 +1,8 @@
 import sqlite3
 
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, redirect, render_template, request, session, url_for
 
-from database.db import create_user, get_db, init_db, seed_db
+from database.db import create_user, get_db, init_db, seed_db, verify_user
 
 app = Flask(__name__)
 
@@ -26,6 +26,9 @@ def landing():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
+
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip()
@@ -58,9 +61,43 @@ def register():
     return render_template("register.html")
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+
+        error = None
+        user = None
+        if not email or not password:
+            error = "Email and password are required."
+        else:
+            user = verify_user(email, password)
+            if user is None:
+                # Same message whether the email is unknown or the password is
+                # wrong — never confirm which accounts exist.
+                error = "Invalid email or password."
+
+        if error is not None:
+            flash(error, "error")
+            return render_template("login.html"), 400
+
+        session["user_id"] = user["id"]
+        session["user_name"] = user["name"]
+        flash("Welcome back!", "success")
+        return redirect(url_for("landing"))
+
     return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You have been signed out.", "success")
+    return redirect(url_for("landing"))
 
 
 @app.route("/terms")
@@ -76,11 +113,6 @@ def privacy():
 # ------------------------------------------------------------------ #
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
-
-@app.route("/logout")
-def logout():
-    return "Logout — coming in Step 3"
-
 
 @app.route("/profile")
 def profile():
