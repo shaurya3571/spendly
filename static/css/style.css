@@ -19,6 +19,14 @@
     --border: #e4e1da;
     --border-soft: #eeebe4;
 
+    --cat-food: #c17f24;
+    --cat-transport: #5b7fa6;
+    --cat-bills: #7c6bbd;
+    --cat-health: #4f9d7a;
+    --cat-entertainment: #c0577a;
+    --cat-shopping: #4a90a4;
+    --cat-other: #9b9184;
+
     --font-display: 'DM Serif Display', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
 
@@ -102,6 +110,8 @@ a { color: inherit; text-decoration: none; }
 
 .nav-links a { color: var(--ink-muted); transition: color 0.2s; }
 .nav-links a:hover { color: var(--ink); }
+
+.nav-username { color: var(--ink-muted); }
 
 .nav-cta {
     background: var(--ink) !important;
