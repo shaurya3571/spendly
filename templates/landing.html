@@ -78,6 +78,7 @@
             <a href="#" class="btn-primary" id="how-it-works-btn">See how it works</a>
         </div>
     </div>
+    {% if not session.user_id %}
     <div class="hero-visual">
         <div class="dash-card">
             <div class="dash-dots">
@@ -124,6 +125,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </section>
 
 <section class="features">
