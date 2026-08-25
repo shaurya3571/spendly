@@ -47,6 +47,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% if transactions %}
                     {% for tx in transactions %}
                     <tr>
                         <td>{{ tx.date }}</td>
@@ -55,6 +56,9 @@
                         <td class="profile-table-amount">₹{{ "%.2f"|format(tx.amount) }}</td>
                     </tr>
                     {% endfor %}
+                    {% else %}
+                    <tr><td colspan="4" class="profile-empty">No transactions yet.</td></tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -62,15 +66,19 @@
         <div class="profile-card">
             <h2 class="profile-card-title"><i data-lucide="pie-chart"></i> Category breakdown</h2>
             <div class="profile-progress-list">
+                {% if categories %}
                 {% for cat in categories %}
                 <div class="profile-progress-row">
                     <span class="profile-progress-label">{{ cat.name }}</span>
                     <div class="profile-progress-track">
                         <div class="profile-progress-bar cat-bar-{{ cat.name|lower }}" style="width: {{ cat.percent }}%"></div>
                     </div>
-                    <span class="profile-progress-amount">₹{{ cat.amount }}</span>
+                    <span class="profile-progress-amount">₹{{ "%.2f"|format(cat.amount) }}</span>
                 </div>
                 {% endfor %}
+                {% else %}
+                <p class="profile-empty">No expenses yet — add one to see your category breakdown.</p>
+                {% endif %}
             </div>
         </div>
 
