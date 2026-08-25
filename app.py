@@ -1,4 +1,6 @@
+import calendar
 import sqlite3
+from datetime import date, datetime
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 
@@ -19,6 +21,86 @@ app.secret_key = "dev-secret-key-change-me"
 with app.app_context():
     init_db()
     seed_db()
+
+
+# ------------------------------------------------------------------ #
+# Date-filter helpers (profile page presets)                          #
+# ------------------------------------------------------------------ #
+
+PRESET_LABELS = (
+    ("this_month", "This Month"),
+    ("last_3_months", "Last 3 Months"),
+    ("last_6_months", "Last 6 Months"),
+    ("all_time", "All Time"),
+)
+
+
+def _parse_date(value):
+    """Parse an ISO date string; return a date object, or None if
+    absent/malformed."""
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def _months_ago(d, months):
+    """Return d shifted back by `months` calendar months, clamping the
+    day to the target month's last valid day."""
+    month_index = d.month - 1 - months
+    year = d.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(d.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def _preset_ranges(today=None):
+    """Return preset name -> (date_from, date_to) as date objects, or
+    (None, None) for All Time."""
+    today = today or date.today()
+    return {
+        "this_month": (today.replace(day=1), today),
+        "last_3_months": (_months_ago(today, 3), today),
+        "last_6_months": (_months_ago(today, 6), today),
+        "all_time": (None, None),
+    }
+
+
+def _iso_or_none(d):
+    return d.isoformat() if d is not None else None
+
+
+def _resolve_date_filter(args):
+    """Read/validate date_from & date_to from request.args, returning
+    (date_from_str, date_to_str, presets, active_preset)."""
+    date_from = _parse_date(args.get("date_from"))
+    date_to = _parse_date(args.get("date_to"))
+
+    if date_from is not None and date_to is not None and date_from > date_to:
+        flash("Start date must be before end date.", "error")
+        date_from = date_to = None
+
+    preset_ranges = _preset_ranges()
+    active_preset = next(
+        (
+            name
+            for name, (p_from, p_to) in preset_ranges.items()
+            if p_from == date_from and p_to == date_to
+        ),
+        None,
+    )
+    presets = [
+        {
+            "name": name,
+            "label": label,
+            "date_from": _iso_or_none(preset_ranges[name][0]),
+            "date_to": _iso_or_none(preset_ranges[name][1]),
+        }
+        for name, label in PRESET_LABELS
+    ]
+    return _iso_or_none(date_from), _iso_or_none(date_to), presets, active_preset
 
 
 # ------------------------------------------------------------------ #
@@ -138,11 +220,16 @@ def profile():
         "member_since": member_row["member_since"],
     }
 
+    # --- Date filter (Step 6) ---
+    date_from_str, date_to_str, presets, active_preset = _resolve_date_filter(request.args)
+    range_note = "all time" if active_preset == "all_time" else "in range"
+    # --- End date filter ---
+
     # --- TODO(subagent-2: summary-stats) START ---
-    summary = get_summary_stats(user_id)
+    summary = get_summary_stats(user_id, date_from=date_from_str, date_to=date_to_str)
     stats = [
-        {"label": "Total spent", "value": f"₹{summary['total_spent']:.2f}", "note": "all time"},
-        {"label": "Transactions", "value": str(summary["transaction_count"]), "note": "all time"},
+        {"label": "Total spent", "value": f"₹{summary['total_spent']:.2f}", "note": range_note},
+        {"label": "Transactions", "value": str(summary["transaction_count"]), "note": range_note},
         {
             "label": "Top category",
             "value": summary["top_category"],
@@ -155,11 +242,11 @@ def profile():
     # --- TODO(subagent-2: summary-stats) END -----
 
     # --- TODO(subagent-1: transaction-history) START ---
-    transactions = get_recent_transactions(user_id)
+    transactions = get_recent_transactions(user_id, date_from=date_from_str, date_to=date_to_str)
     # --- TODO(subagent-1: transaction-history) END -----
 
     # --- TODO(subagent-3: category-breakdown) START ---
-    categories = get_category_breakdown(user_id)
+    categories = get_category_breakdown(user_id, date_from=date_from_str, date_to=date_to_str)
     # --- TODO(subagent-3: category-breakdown) END -----
 
     return render_template(
@@ -168,6 +255,10 @@ def profile():
         stats=stats,
         transactions=transactions,
         categories=categories,
+        date_from=date_from_str,
+        date_to=date_to_str,
+        presets=presets,
+        active_preset=active_preset,
     )
 
 

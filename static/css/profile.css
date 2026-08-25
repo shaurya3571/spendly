@@ -86,6 +86,88 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Filter bar                                                          */
+/* ------------------------------------------------------------------ */
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+}
+
+.filter-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.filter-preset-btn {
+    display: inline-block;
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.filter-preset-btn:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+.filter-preset-btn-active,
+.filter-preset-btn-active:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
+}
+
+.filter-custom-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.filter-custom-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.filter-custom-field label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+}
+
+.filter-date-input {
+    width: auto;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.85rem;
+}
+
+.filter-apply-btn {
+    padding: 0.5rem 1.2rem;
+    font-size: 0.85rem;
+}
+
+.filter-apply-btn-active {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ------------------------------------------------------------------ */
 /* Summary stats                                                       */
 /* ------------------------------------------------------------------ */
 
@@ -237,4 +319,6 @@
     .profile-user-card { flex-direction: column; text-align: center; }
     .profile-table { display: block; overflow-x: auto; }
     .profile-progress-row { grid-template-columns: 90px 1fr 70px; gap: 0.5rem; }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .filter-custom-form { justify-content: flex-start; }
 }
