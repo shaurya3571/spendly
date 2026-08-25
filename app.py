@@ -3,6 +3,12 @@ import sqlite3
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 
 from database.db import create_user, get_db, init_db, seed_db, verify_user
+from database.queries import (
+    get_category_breakdown,
+    get_recent_transactions,
+    get_summary_stats,
+    get_user_by_id,
+)
 
 app = Flask(__name__)
 
@@ -118,35 +124,43 @@ def profile():
     if not session.get("user_id"):
         return redirect(url_for("login"))
 
+    user_id = session["user_id"]
+
+    member_row = get_user_by_id(user_id)
+    if member_row is None:
+        session.clear()
+        flash("Please sign in again.", "error")
+        return redirect(url_for("login"))
+
     member = {
-        "name": session.get("user_name", "Member"),
-        "email": "demo@spendly.com",
-        "member_since": "March 2024",
+        "name": member_row["name"],
+        "email": member_row["email"],
+        "member_since": member_row["member_since"],
     }
 
+    # --- TODO(subagent-2: summary-stats) START ---
+    summary = get_summary_stats(user_id)
     stats = [
-        {"label": "Total spent", "value": "₹18,240", "note": "this month"},
-        {"label": "Transactions", "value": "34", "note": "this month"},
-        {"label": "Top category", "value": "Food", "note": "₹6,120 spent"},
+        {"label": "Total spent", "value": f"₹{summary['total_spent']:.2f}", "note": "all time"},
+        {"label": "Transactions", "value": str(summary["transaction_count"]), "note": "all time"},
+        {
+            "label": "Top category",
+            "value": summary["top_category"],
+            "note": (
+                f"₹{summary['top_category_amount']:.2f} spent"
+                if summary["transaction_count"] > 0 else "no expenses yet"
+            ),
+        },
     ]
+    # --- TODO(subagent-2: summary-stats) END -----
 
-    transactions = [
-        {"date": "2026-08-03", "description": "Groceries", "category": "Food", "amount": 25.50},
-        {"date": "2026-08-02", "description": "Bus pass", "category": "Transport", "amount": 12.00},
-        {"date": "2026-08-01", "description": "Electricity bill", "category": "Bills", "amount": 60.00},
-        {"date": "2026-07-31", "description": "Pharmacy", "category": "Health", "amount": 45.00},
-        {"date": "2026-07-30", "description": "Movie ticket", "category": "Entertainment", "amount": 15.00},
-    ]
+    # --- TODO(subagent-1: transaction-history) START ---
+    transactions = get_recent_transactions(user_id)
+    # --- TODO(subagent-1: transaction-history) END -----
 
-    categories = [
-        {"name": "Food", "amount": 6120, "percent": 78},
-        {"name": "Transport", "amount": 3480, "percent": 58},
-        {"name": "Bills", "amount": 2880, "percent": 48},
-        {"name": "Health", "amount": 1950, "percent": 32},
-        {"name": "Entertainment", "amount": 1200, "percent": 20},
-        {"name": "Shopping", "amount": 1740, "percent": 28},
-        {"name": "Other", "amount": 870, "percent": 14},
-    ]
+    # --- TODO(subagent-3: category-breakdown) START ---
+    categories = get_category_breakdown(user_id)
+    # --- TODO(subagent-3: category-breakdown) END -----
 
     return render_template(
         "profile.html",
